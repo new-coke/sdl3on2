@@ -757,6 +757,7 @@ extern S3_GamepadButtonLabel S3_GetGamepadButtonLabel(S3_Gamepad* gamepad, S3_Ga
 extern S3_GamepadButtonLabel S3_GetGamepadButtonLabelForType(S3_GamepadType type, S3_GamepadButton button);
 extern bool S3_RumbleGamepad(S3_Gamepad* gamepad, Uint16 low_frequency_rumble, Uint16 high_frequency_rumble, Uint32 duration_ms);
 extern bool S3_SetGamepadLED(S3_Gamepad* gamepad, Uint8 red, Uint8 green, Uint8 blue);
+extern bool S3_SendGamepadEffect(S3_Gamepad* gamepad, const void* data, int size);
 extern bool S3_GamepadHasSensor(S3_Gamepad* gamepad, S3_SensorType type);
 extern bool S3_SetGamepadSensorEnabled(S3_Gamepad* gamepad, S3_SensorType type, bool enabled);
 extern bool S3_GetGamepadSensorData(S3_Gamepad* gamepad, S3_SensorType type, float* data, int num_values);

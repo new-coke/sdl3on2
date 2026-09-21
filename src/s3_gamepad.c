@@ -697,6 +697,15 @@ bool S3_SetGamepadLED(S3_Gamepad* gamepad, Uint8 red, Uint8 green, Uint8 blue)
     return SDL_GameControllerSetLED(S3_UnwrapGamepad(gamepad), red, green, blue) == 0;
 }
 
+bool S3_SendGamepadEffect(S3_Gamepad* gamepad, const void* data, int size)
+{
+    if (gamepad == NULL) {
+        return S3_InvalidGamepad();
+    }
+
+    return SDL_GameControllerSendEffect(S3_UnwrapGamepad(gamepad), data, size) == 0;
+}
+
 bool S3_GamepadHasSensor(S3_Gamepad* gamepad, S3_SensorType type)
 {
     if (gamepad == NULL) {

@@ -1009,6 +1009,7 @@ enum {
 #define SDL_GetGamepadButtonLabelForType S3_GetGamepadButtonLabelForType
 #define SDL_RumbleGamepad S3_RumbleGamepad
 #define SDL_SetGamepadLED S3_SetGamepadLED
+#define SDL_SendGamepadEffect S3_SendGamepadEffect
 #define SDL_GamepadHasSensor S3_GamepadHasSensor
 #define SDL_SetGamepadSensorEnabled S3_SetGamepadSensorEnabled
 #define SDL_GetGamepadSensorData S3_GetGamepadSensorData

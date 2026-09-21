@@ -216,23 +216,31 @@ static void S3_SwitchInitVibration(S3_SwitchPad* pad, int slot, int source, u32 
     }
 }
 
-static void S3_SwitchVibrate(S3_SwitchPad* pad, Uint16 low_frequency_rumble, Uint16 high_frequency_rumble)
+static void S3_SwitchSendVibration(S3_SwitchPad* pad, const HidVibrationValue* value)
 {
-    // The bands' resting frequencies, which SDL3 uses too.
     HidVibrationValue values[2];
     int source;
 
-    values[0].amp_low = (float)low_frequency_rumble / 65535.0f;
-    values[0].freq_low = 160.0f;
-    values[0].amp_high = (float)high_frequency_rumble / 65535.0f;
-    values[0].freq_high = 320.0f;
-    values[1] = values[0];
+    values[0] = *value;
+    values[1] = *value;
 
     for (source = 0; source < S3_SWITCH_SOURCES; source++) {
         if (pad->vibration_count[source] > 0) {
             hidSendVibrationValues(pad->vibration[source], values, pad->vibration_count[source]);
         }
     }
+}
+
+static void S3_SwitchVibrate(S3_SwitchPad* pad, Uint16 low_frequency_rumble, Uint16 high_frequency_rumble)
+{
+    // The bands' resting frequencies, which SDL3 uses too.
+    HidVibrationValue value;
+
+    value.amp_low = (float)low_frequency_rumble / 65535.0f;
+    value.freq_low = 160.0f;
+    value.amp_high = (float)high_frequency_rumble / 65535.0f;
+    value.freq_high = 320.0f;
+    S3_SwitchSendVibration(pad, &value);
 }
 
 // Pushed as SDL2 events, whose instance ids start at 0.
@@ -725,6 +733,32 @@ bool S3_SetGamepadLED(S3_Gamepad* gamepad, Uint8 red, Uint8 green, Uint8 blue)
     SDL_SetError("That operation is not supported");
 
     return false;
+}
+
+bool S3_SendGamepadEffect(S3_Gamepad* gamepad, const void* data, int size)
+{
+    S3_SwitchPad* pad = S3_SwitchPadFrom(gamepad, "gamepad");
+    HidVibrationValue value;
+
+    if (pad == NULL) {
+        return false;
+    }
+
+    if (data == NULL || size != (int)sizeof(value)) {
+        SDL_SetError("Parameter 'size' is invalid");
+        return false;
+    }
+
+    if (!pad->connected || pad->vibration_count[0] + pad->vibration_count[1] == 0) {
+        SDL_SetError("That operation is not supported");
+        return false;
+    }
+
+    SDL_memcpy(&value, data, sizeof(value));
+    S3_SwitchSendVibration(pad, &value);
+    pad->rumble_expiry = 0;
+
+    return true;
 }
 
 bool S3_GamepadHasSensor(S3_Gamepad* gamepad, S3_SensorType type)
