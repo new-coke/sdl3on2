@@ -980,6 +980,8 @@ enum {
 #define SDL_GUIDToString S3_GUIDToString
 #define SDL_StringToGUID S3_StringToGUID
 #define SDL_GetJoystickGUIDInfo S3_GetJoystickGUIDInfo
+#define SDL_LockJoysticks S3_LockJoysticks
+#define SDL_UnlockJoysticks S3_UnlockJoysticks
 #define SDL_OpenJoystick S3_OpenJoystick
 #define SDL_GetJoystickID S3_GetJoystickID
 #define SDL_GetJoystickPowerInfo S3_GetJoystickPowerInfo

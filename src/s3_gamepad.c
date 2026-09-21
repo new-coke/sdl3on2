@@ -136,6 +136,16 @@ void S3_GetJoystickGUIDInfo(S3_GUID guid, Uint16* vendor, Uint16* product, Uint1
 }
 
 #ifndef __SWITCH__
+void S3_LockJoysticks(void)
+{
+    SDL_LockJoysticks();
+}
+
+void S3_UnlockJoysticks(void)
+{
+    SDL_UnlockJoysticks();
+}
+
 S3_Joystick* S3_OpenJoystick(S3_JoystickID instance_id)
 {
     const int index = S3_JoystickDeviceIndex(instance_id);

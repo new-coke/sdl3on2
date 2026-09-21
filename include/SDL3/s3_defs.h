@@ -727,6 +727,8 @@ extern void S3_GUIDToString(S3_GUID guid, char* pszGUID, int cbGUID);
 extern S3_GUID S3_StringToGUID(const char* pchGUID);
 extern void S3_GetJoystickGUIDInfo(S3_GUID guid, Uint16* vendor, Uint16* product, Uint16* version, Uint16* crc16);
 
+extern void S3_LockJoysticks(void);
+extern void S3_UnlockJoysticks(void);
 extern S3_Joystick* S3_OpenJoystick(S3_JoystickID instance_id);
 extern S3_JoystickID S3_GetJoystickID(S3_Joystick* joystick);
 extern S3_PowerState S3_GetJoystickPowerInfo(S3_Joystick* joystick, int* percent);

@@ -93,6 +93,8 @@ static const S3_SwitchButton s3_switch_right_buttons[] = {
 
 static S3_SwitchPad s3_pads[S3_SWITCH_PAD_COUNT];
 static int s3_pads_refcount;
+// Guards pad state from rumble and SDL_LockJoysticks callers on other threads.
+static RMutex s3_pads_lock;
 static S3_JoystickID s3_next_instance = 1;
 
 static HidNpadIdType S3_SwitchSourceID(int slot, int source)
@@ -304,6 +306,7 @@ void S3_SwitchPumpPads(void)
         return;
     }
 
+    rmutexLock(&s3_pads_lock);
     for (slot = 0; slot < S3_SWITCH_PAD_COUNT; slot++) {
         S3_SwitchPad* pad = &s3_pads[slot];
         S3_GamepadType type = S3_GAMEPAD_TYPE_UNKNOWN;
@@ -360,6 +363,7 @@ void S3_SwitchPumpPads(void)
             S3_SwitchVibrate(pad, 0, 0);
         }
     }
+    rmutexUnlock(&s3_pads_lock);
 }
 
 bool S3_SwitchInitPads(void)
@@ -373,10 +377,12 @@ bool S3_SwitchInitPads(void)
     padConfigureInput(S3_SWITCH_PAD_COUNT, HidNpadStyleSet_NpadStandard);
     hidSetNpadJoyHoldType(HidNpadJoyHoldType_Horizontal);
 
+    rmutexLock(&s3_pads_lock);
     SDL_zeroa(s3_pads);
     for (slot = 0; slot < S3_SWITCH_PAD_COUNT; slot++) {
         s3_pads[slot].player = slot;
     }
+    rmutexUnlock(&s3_pads_lock);
 
     // SDL3 announces the controllers already connected.
     S3_SwitchPumpPads();
@@ -397,6 +403,7 @@ void S3_SwitchQuitPads(bool all)
         return;
     }
 
+    rmutexLock(&s3_pads_lock);
     for (slot = 0; slot < S3_SWITCH_PAD_COUNT; slot++) {
         if (s3_pads[slot].connected) {
             S3_SwitchVibrate(&s3_pads[slot], 0, 0);
@@ -406,6 +413,7 @@ void S3_SwitchQuitPads(bool all)
         }
     }
     SDL_zeroa(s3_pads);
+    rmutexUnlock(&s3_pads_lock);
 }
 
 bool S3_SwitchPadsInitialized(void)
@@ -445,11 +453,14 @@ static S3_SwitchPad* S3_SwitchPadFrom(const void* handle, const char* parameter)
 
 static S3_SwitchPad* S3_SwitchOpen(S3_JoystickID instance_id)
 {
-    S3_SwitchPad* pad = S3_SwitchPadForID(instance_id);
+    S3_SwitchPad* pad;
 
+    rmutexLock(&s3_pads_lock);
+    pad = S3_SwitchPadForID(instance_id);
     if (pad != NULL) {
         pad->refcount++;
     }
+    rmutexUnlock(&s3_pads_lock);
 
     return pad;
 }
@@ -466,6 +477,16 @@ static Uint16 S3_SwitchPadProduct(S3_GamepadType type)
     default:
         return S3_NINTENDO_PRO;
     }
+}
+
+void S3_LockJoysticks(void)
+{
+    rmutexLock(&s3_pads_lock);
+}
+
+void S3_UnlockJoysticks(void)
+{
+    rmutexUnlock(&s3_pads_lock);
 }
 
 S3_Joystick* S3_OpenJoystick(S3_JoystickID instance_id)
@@ -523,17 +544,17 @@ void S3_CloseGamepad(S3_Gamepad* gamepad)
         return;
     }
 
+    rmutexLock(&s3_pads_lock);
     pad = S3_SwitchPadFrom(gamepad, "gamepad");
-    if (pad == NULL || --pad->refcount > 0) {
-        return;
+    if (pad != NULL && --pad->refcount == 0) {
+        // SDL3 stops a gamepad's rumble when the last handle closes.
+        if (pad->connected) {
+            S3_SwitchVibrate(pad, 0, 0);
+        }
+        pad->rumble_expiry = 0;
+        S3_ReleaseObjectProperties(gamepad);
     }
-
-    // SDL3 stops a gamepad's rumble when the last handle closes.
-    if (pad->connected) {
-        S3_SwitchVibrate(pad, 0, 0);
-    }
-    pad->rumble_expiry = 0;
-    S3_ReleaseObjectProperties(gamepad);
+    rmutexUnlock(&s3_pads_lock);
 }
 
 S3_JoystickID S3_GetGamepadID(S3_Gamepad* gamepad)
@@ -696,28 +717,37 @@ bool S3_GetGamepadButton(S3_Gamepad* gamepad, S3_GamepadButton button)
     return pad->connected && (pad->buttons & (1u << button)) != 0;
 }
 
-bool S3_RumbleGamepad(S3_Gamepad* gamepad, Uint16 low_frequency_rumble, Uint16 high_frequency_rumble, Uint32 duration_ms)
+// The caller holds s3_pads_lock.
+static S3_SwitchPad* S3_SwitchRumblePad(S3_Gamepad* gamepad)
 {
     S3_SwitchPad* pad = S3_SwitchPadFrom(gamepad, "gamepad");
 
-    if (pad == NULL) {
-        return false;
-    }
-
-    if (!pad->connected || pad->vibration_count[0] + pad->vibration_count[1] == 0) {
+    if (pad != NULL && (!pad->connected || pad->vibration_count[0] + pad->vibration_count[1] == 0)) {
         SDL_SetError("That operation is not supported");
-        return false;
+        return NULL;
     }
 
-    S3_SwitchVibrate(pad, low_frequency_rumble, high_frequency_rumble);
+    return pad;
+}
 
-    // As in SDL3, a zero duration lasts until the next call and any other is capped at 0xFFFF ms.
-    pad->rumble_expiry = 0;
-    if ((low_frequency_rumble != 0 || high_frequency_rumble != 0) && duration_ms != 0) {
-        pad->rumble_expiry = SDL_GetTicks64() + SDL_min(duration_ms, 0xFFFFu);
+bool S3_RumbleGamepad(S3_Gamepad* gamepad, Uint16 low_frequency_rumble, Uint16 high_frequency_rumble, Uint32 duration_ms)
+{
+    S3_SwitchPad* pad;
+
+    rmutexLock(&s3_pads_lock);
+    pad = S3_SwitchRumblePad(gamepad);
+    if (pad != NULL) {
+        S3_SwitchVibrate(pad, low_frequency_rumble, high_frequency_rumble);
+
+        // As in SDL3, a zero duration lasts until the next call and any other is capped at 0xFFFF ms.
+        pad->rumble_expiry = 0;
+        if ((low_frequency_rumble != 0 || high_frequency_rumble != 0) && duration_ms != 0) {
+            pad->rumble_expiry = SDL_GetTicks64() + SDL_min(duration_ms, 0xFFFFu);
+        }
     }
+    rmutexUnlock(&s3_pads_lock);
 
-    return true;
+    return pad != NULL;
 }
 
 bool S3_SetGamepadLED(S3_Gamepad* gamepad, Uint8 red, Uint8 green, Uint8 blue)
@@ -737,28 +767,24 @@ bool S3_SetGamepadLED(S3_Gamepad* gamepad, Uint8 red, Uint8 green, Uint8 blue)
 
 bool S3_SendGamepadEffect(S3_Gamepad* gamepad, const void* data, int size)
 {
-    S3_SwitchPad* pad = S3_SwitchPadFrom(gamepad, "gamepad");
+    S3_SwitchPad* pad;
     HidVibrationValue value;
-
-    if (pad == NULL) {
-        return false;
-    }
 
     if (data == NULL || size != (int)sizeof(value)) {
         SDL_SetError("Parameter 'size' is invalid");
         return false;
     }
-
-    if (!pad->connected || pad->vibration_count[0] + pad->vibration_count[1] == 0) {
-        SDL_SetError("That operation is not supported");
-        return false;
-    }
-
     SDL_memcpy(&value, data, sizeof(value));
-    S3_SwitchSendVibration(pad, &value);
-    pad->rumble_expiry = 0;
 
-    return true;
+    rmutexLock(&s3_pads_lock);
+    pad = S3_SwitchRumblePad(gamepad);
+    if (pad != NULL) {
+        S3_SwitchSendVibration(pad, &value);
+        pad->rumble_expiry = 0;
+    }
+    rmutexUnlock(&s3_pads_lock);
+
+    return pad != NULL;
 }
 
 bool S3_GamepadHasSensor(S3_Gamepad* gamepad, S3_SensorType type)
