@@ -61,6 +61,8 @@ bool S3_InitSubSystem(S3_InitFlags flags)
 #ifdef __SWITCH__
     // SDL2's Switch video driver would take the default NWindow for EGL, which Vulkan presents to.
     native &= ~(Uint32)SDL_INIT_VIDEO;
+    // The layer reads controllers from libnx itself.
+    native &= ~(Uint32)(SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER);
 #endif
 
     if (native != 0 && SDL_InitSubSystem(native) != 0) {
@@ -81,6 +83,12 @@ bool S3_InitSubSystem(S3_InitFlags flags)
         s3_video_thread = SDL_ThreadID();
     }
 
+#ifdef __SWITCH__
+    if ((flags & (S3_INIT_JOYSTICK | S3_INIT_GAMEPAD)) != 0) {
+        S3_SwitchInitPads();
+    }
+#endif
+
     return true;
 }
 
@@ -98,10 +106,14 @@ void S3_QuitSubSystem(S3_InitFlags flags)
     }
 
 #ifdef __SWITCH__
-    native &= ~(Uint32)SDL_INIT_VIDEO;
+    native &= ~(Uint32)(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER);
 
     if ((flags & S3_INIT_VIDEO) != 0) {
         S3_SwitchQuitVideo(false);
+    }
+
+    if ((flags & (S3_INIT_JOYSTICK | S3_INIT_GAMEPAD)) != 0) {
+        S3_SwitchQuitPads(false);
     }
 #endif
 
@@ -122,10 +134,14 @@ S3_InitFlags S3_WasInit(S3_InitFlags flags)
     }
 
 #ifdef __SWITCH__
-    result &= ~(S3_InitFlags)S3_INIT_VIDEO;
+    result &= ~(S3_InitFlags)(S3_INIT_VIDEO | S3_INIT_JOYSTICK | S3_INIT_GAMEPAD);
 
     if ((flags == 0 || (flags & S3_INIT_VIDEO) != 0) && S3_SwitchVideoInitialized()) {
         result |= S3_INIT_VIDEO;
+    }
+
+    if (S3_SwitchPadsInitialized()) {
+        result |= (flags == 0 ? S3_INIT_JOYSTICK | S3_INIT_GAMEPAD : flags) & (S3_INIT_JOYSTICK | S3_INIT_GAMEPAD);
     }
 #endif
 
@@ -136,6 +152,7 @@ void S3_Quit(void)
 {
 #ifdef __SWITCH__
     S3_SwitchQuitVideo(true);
+    S3_SwitchQuitPads(true);
 #endif
 
     S3_QuitProperties();

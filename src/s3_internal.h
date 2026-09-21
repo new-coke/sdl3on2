@@ -48,6 +48,10 @@ bool S3_SwitchInitVideo(void);
 void S3_SwitchQuitVideo(bool all);
 bool S3_SwitchVideoInitialized(void);
 void S3_SwitchPumpApplet(void);
+bool S3_SwitchInitPads(void);
+void S3_SwitchQuitPads(bool all);
+bool S3_SwitchPadsInitialized(void);
+void S3_SwitchPumpPads(void);
 #endif
 
 #ifdef __cplusplus

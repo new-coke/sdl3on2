@@ -28,6 +28,11 @@ declared in `include/SDL3/s3_defs.h` and `include/SDL3_mixer/s3_mixer_defs.h` ex
 - Setting a string property to NULL clears its value; it does not delete the property.
 - SDL3 event types with no SDL2 source, such as pen and camera events, are not declared, and
   `SDL_INIT_CAMERA` fails.
+- On Switch, gamepads come from libnx instead of SDL2's joystick driver. Each of up to eight
+  controllers is a gamepad only while it is connected, and its player index is the console's player
+  number. SDL3's sideways mapping applies to a single Joy-Con. A controller that changes style,
+  such as a Joy-Con pair split in two, is removed and added again. Power levels are unknown, and
+  virtual joysticks, LEDs and sensors are not supported.
 - In the mixer:
   - Mixing is Sint16 at the device format, not float.
   - `MIX_CreateMixerDevice` opens the default playback device whatever `devid` names. The device

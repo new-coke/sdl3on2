@@ -169,9 +169,14 @@ bool S3_TranslateEvent(const SDL_Event* native, S3_Event* event, char* text, siz
         break;
 
     case SDL_CONTROLLERDEVICEADDED:
-        // SDL2 carries the device index here and the instance id everywhere else.
         event->type = S3_EVENT_GAMEPAD_ADDED;
+#ifdef __SWITCH__
+        // The layer's own Switch pads carry the instance id here too.
+        event->gdevice.which = S3_FromSDL2JoystickID(native->cdevice.which);
+#else
+        // SDL2 carries the device index here and the instance id everywhere else.
         event->gdevice.which = S3_FromSDL2JoystickID(SDL_JoystickGetDeviceInstanceID(native->cdevice.which));
+#endif
         break;
 
     case SDL_CONTROLLERDEVICEREMOVED:
@@ -264,6 +269,7 @@ static void S3_PumpPlatform(void)
 #ifdef __SWITCH__
     // Without SDL2's video driver nothing else runs the applet loop.
     S3_SwitchPumpApplet();
+    S3_SwitchPumpPads();
 #endif
 }
 

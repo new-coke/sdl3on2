@@ -1,10 +1,6 @@
 #include <assert.h>
 #include <stdio.h>
 
-#ifdef __SWITCH__
-#include <switch.h>
-#endif
-
 #include "s3_internal.h"
 
 static_assert(sizeof(S3_GUID) == sizeof(SDL_GUID), "S3_GUID size");
@@ -16,6 +12,7 @@ static_assert((int)S3_JOYSTICK_TYPE_THROTTLE == (int)SDL_JOYSTICK_TYPE_THROTTLE,
 
 #define S3_SDL2_BUTTON_COUNT ((int)SDL_CONTROLLER_BUTTON_MAX)
 
+#ifndef __SWITCH__
 static SDL_GameController* S3_UnwrapGamepad(S3_Gamepad* gamepad)
 {
     return (SDL_GameController*)gamepad;
@@ -25,6 +22,7 @@ static SDL_Joystick* S3_UnwrapJoystick(S3_Joystick* joystick)
 {
     return (SDL_Joystick*)joystick;
 }
+#endif
 
 static bool S3_InvalidGamepad(void)
 {
@@ -38,6 +36,7 @@ S3_JoystickID S3_FromSDL2JoystickID(SDL_JoystickID id)
     return id < 0 ? 0u : (S3_JoystickID)id + 1u;
 }
 
+#ifndef __SWITCH__
 static SDL_JoystickID S3_ToSDL2JoystickID(S3_JoystickID id)
 {
     return id == 0u ? -1 : (SDL_JoystickID)(id - 1u);
@@ -45,38 +44,6 @@ static SDL_JoystickID S3_ToSDL2JoystickID(S3_JoystickID id)
 
 // As many as SDL2 tracks numbers for.
 #define S3_MAX_PLAYER_INDEX 16
-
-#ifdef __SWITCH__
-// SDL2 lists all eight pads, attached or not, and never rescans; only a held pad gets a number.
-static bool S3_SwitchPadAttached(int device_index)
-{
-    static PadState pads[8];
-    static bool initialized;
-
-    if (device_index < 0 || device_index >= 8) {
-        return false;
-    }
-
-    if (!initialized) {
-        int i;
-
-        for (i = 0; i < 8; i++) {
-            // Pad one is also the console in handheld mode; BITL since the handheld id is bit 32.
-            u64 mask = BITL(HidNpadIdType_No1 + i);
-
-            if (i == 0) {
-                mask |= BITL(HidNpadIdType_Handheld);
-            }
-            padInitializeWithMask(&pads[i], mask);
-        }
-        initialized = true;
-    }
-
-    padUpdate(&pads[device_index]);
-
-    return padIsConnected(&pads[device_index]);
-}
-#endif
 
 int S3_JoystickDeviceIndex(S3_JoystickID instance_id)
 {
@@ -140,6 +107,7 @@ static S3_PowerState S3_PowerStateFromLevel(SDL_JoystickPowerLevel level, int* p
 
     return state;
 }
+#endif
 
 void S3_GUIDToString(S3_GUID guid, char* pszGUID, int cbGUID)
 {
@@ -167,6 +135,7 @@ void S3_GetJoystickGUIDInfo(S3_GUID guid, Uint16* vendor, Uint16* product, Uint1
     SDL_GetJoystickGUIDInfo(native, vendor, product, version, crc16);
 }
 
+#ifndef __SWITCH__
 S3_Joystick* S3_OpenJoystick(S3_JoystickID instance_id)
 {
     const int index = S3_JoystickDeviceIndex(instance_id);
@@ -332,11 +301,7 @@ S3_Gamepad* S3_OpenGamepad(S3_JoystickID instance_id)
     }
 
     // SDL3 numbers a gamepad as it arrives; SDL2 leaves that to drivers, and some never do.
-    if (SDL_GameControllerGetPlayerIndex(native) < 0
-#ifdef __SWITCH__
-        && S3_SwitchPadAttached(index)
-#endif
-    ) {
+    if (SDL_GameControllerGetPlayerIndex(native) < 0) {
         int player;
 
         for (player = 0; player < S3_MAX_PLAYER_INDEX; player++) {
@@ -455,11 +420,6 @@ static S3_GamepadType S3_FromSDL2GamepadType(SDL_GameControllerType type, Uint16
         return S3_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_RIGHT;
     case SDL_CONTROLLER_TYPE_NINTENDO_SWITCH_JOYCON_PAIR:
         return S3_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_PAIR;
-#ifdef __SWITCH__
-    // libnx's HID driver reports the console's own Nintendo controllers with no VID/PID.
-    case SDL_CONTROLLER_TYPE_UNKNOWN:
-        return S3_GAMEPAD_TYPE_NINTENDO_SWITCH_PRO;
-#endif
     default:
         break;
     }
@@ -604,6 +564,7 @@ bool S3_GetGamepadButton(S3_Gamepad* gamepad, S3_GamepadButton button)
 
     return SDL_GameControllerGetButton(S3_UnwrapGamepad(gamepad), (SDL_GameControllerButton)button) != 0;
 }
+#endif
 
 static const char* const s3_gamepad_button_names[S3_GAMEPAD_BUTTON_COUNT] = {
     "a",
@@ -717,6 +678,7 @@ S3_GamepadButtonLabel S3_GetGamepadButtonLabel(S3_Gamepad* gamepad, S3_GamepadBu
     return S3_GetGamepadButtonLabelForType(S3_GetGamepadType(gamepad), button);
 }
 
+#ifndef __SWITCH__
 bool S3_RumbleGamepad(S3_Gamepad* gamepad, Uint16 low_frequency_rumble, Uint16 high_frequency_rumble, Uint32 duration_ms)
 {
     if (gamepad == NULL) {
@@ -761,6 +723,7 @@ bool S3_GetGamepadSensorData(S3_Gamepad* gamepad, S3_SensorType type, float* dat
 
     return SDL_GameControllerGetSensorData(S3_UnwrapGamepad(gamepad), (SDL_SensorType)type, data, num_values) == 0;
 }
+#endif
 
 static int S3_SensorDeviceIndex(S3_SensorID instance_id)
 {
