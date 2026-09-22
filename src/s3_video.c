@@ -671,14 +671,21 @@ S3_Window* S3_GetWindowFromID(S3_WindowID id)
 S3_PropertiesID S3_GetWindowProperties(S3_Window* window)
 {
     bool created;
+    S3_PropertiesID props;
 
-    // SDL2 exposes native handles through SDL_syswm, not properties, so the group stays empty.
     if (window == NULL) {
         SDL_SetError("Invalid window");
         return 0;
     }
 
-    return S3_AcquireObjectProperties(window, &created);
+    props = S3_AcquireObjectProperties(window, &created);
+
+    // SDL2 on Android replaces the native window with each new surface, so it is read every call.
+    if (props != 0) {
+        S3_PublishNativeWindowProperties(window, props);
+    }
+
+    return props;
 }
 
 S3_WindowFlags S3_GetWindowFlags(S3_Window* window)

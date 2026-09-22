@@ -9,9 +9,19 @@
 
 // Defined only when true, so #ifdef and #if both work.
 
-#if defined(_WIN32) || defined(__WINRT__) || defined(__GDK__)
+// SDL2 defines __WINRT__ only in its own headers, so UWP is found from the API partition.
+#if defined(_WIN32) && defined(__has_include)
+#if __has_include(<winapifamily.h>)
+#include <winapifamily.h>
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP) && !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+#define SDL_PLATFORM_WINRT 1
+#endif
+#endif
+#endif
+
+#if defined(_WIN32) || defined(__GDK__)
 #define SDL_PLATFORM_WINDOWS 1
-#if !defined(__WINRT__) && !defined(__GDK__)
+#if !defined(SDL_PLATFORM_WINRT) && !defined(__GDK__)
 #define SDL_PLATFORM_WIN32 1
 #endif
 #endif
@@ -730,6 +740,7 @@ enum {
 #define SDL_PROP_WINDOW_WAYLAND_SURFACE_POINTER S3_PROP_WINDOW_WAYLAND_SURFACE_POINTER
 #define SDL_PROP_WINDOW_WIN32_HWND_POINTER S3_PROP_WINDOW_WIN32_HWND_POINTER
 #define SDL_PROP_WINDOW_WIN32_INSTANCE_POINTER S3_PROP_WINDOW_WIN32_INSTANCE_POINTER
+#define SDL_PROP_WINDOW_WINRT_WINDOW_POINTER S3_PROP_WINDOW_WINRT_WINDOW_POINTER
 #define SDL_PROP_WINDOW_X11_DISPLAY_POINTER S3_PROP_WINDOW_X11_DISPLAY_POINTER
 #define SDL_PROP_WINDOW_X11_WINDOW_NUMBER S3_PROP_WINDOW_X11_WINDOW_NUMBER
 #define SDL_PROP_JOYSTICK_CAP_MONO_LED_BOOLEAN S3_PROP_JOYSTICK_CAP_MONO_LED_BOOLEAN

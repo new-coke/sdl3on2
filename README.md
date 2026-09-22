@@ -32,7 +32,15 @@ declared in `include/SDL3/s3_defs.h` and `include/SDL3_mixer/s3_mixer_defs.h` ex
   controllers is a gamepad only while it is connected, and its player index is the console's player
   number. SDL3's sideways mapping applies to a single Joy-Con. A controller that changes style,
   such as a Joy-Con pair split in two, is removed and added again. Power levels are unknown, and
-  virtual joysticks, LEDs and sensors are not supported.
+  virtual joysticks, LEDs and sensors are not supported. `SDL_SendGamepadEffect` takes a libnx
+  `HidVibrationValue`, which plays on each of the controller's actuators until the next rumble call.
+- Window properties carry the native handles from SDL2's `SDL_GetWindowWMInfo` for Win32, X11,
+  Wayland, Android and UWP, refreshed by each `SDL_GetWindowProperties` call. Other video drivers,
+  including Cocoa, publish none.
+- On UWP, which SDL3 does not support, `SDL_PLATFORM_WINRT` is defined in place of
+  `SDL_PLATFORM_WIN32`, and `SDL_PROP_WINDOW_WINRT_WINDOW_POINTER` holds the window's
+  `CoreWindow` as an `IInspectable*`. `SDL_HINT_WINRT_HANDLE_BACK_BUTTON` defaults to 1, so SDL2
+  marks a back request, such as B on an Xbox controller, as handled.
 - In the mixer:
   - Mixing is Sint16 at the device format, not float.
   - `MIX_CreateMixerDevice` opens the default playback device whatever `devid` names. The device
@@ -68,6 +76,10 @@ target_link_libraries(game PRIVATE sdl3on2)
 
 SDL2 must already be found as `SDL2::SDL2-static` or `SDL2::SDL2`, or in `SDL2_LIBRARIES`. On
 Switch, `DEVKITPRO` must be set. The entry point comes from libnx, and SDL2main is not linked.
+
+On UWP, `CMAKE_SYSTEM_NAME` must be `WindowsStore`, or `WINAPI_FAMILY=WINAPI_FAMILY_APP` defined
+for every target. SDL2's WinRT sources are C++/CX and need MSVC; the layer and the application do
+not. The entry point is the layer's `WinMain`, so the executable uses the Windows subsystem.
 
 ## Licence
 

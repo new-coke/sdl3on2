@@ -47,9 +47,14 @@ target_link_libraries(sdl3on2 PUBLIC
     ${SDL3ON2_SDL2_LIBRARY}
 )
 
-# SDL_main.h renames main only on Windows, where SDL2main supplies WinMain.
-if(TARGET SDL2::SDL2main AND WIN32)
+# SDL_main.h renames main only on Windows, where SDL2main supplies WinMain, or the layer on UWP.
+if(TARGET SDL2::SDL2main AND WIN32 AND NOT WINDOWS_STORE)
     target_link_libraries(sdl3on2 PUBLIC SDL2::SDL2main)
+endif()
+
+# The layer's headers find UWP from WINAPI_FAMILY, so every target that includes them needs it.
+if(WINDOWS_STORE)
+    target_compile_definitions(sdl3on2 PUBLIC WINAPI_FAMILY=WINAPI_FAMILY_APP)
 endif()
 
 if(MSVC)

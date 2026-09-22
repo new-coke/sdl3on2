@@ -7,7 +7,7 @@
 
 #include <SDL3/SDL.h>
 
-// Only Windows links SDL2main; on Switch libnx supplies the entry point.
+// Windows links SDL2main and UWP takes WinMain from the layer; on Switch libnx supplies it.
 #if defined(_WIN32) && !defined(__SWITCH__)
 #ifdef __cplusplus
 extern "C" {

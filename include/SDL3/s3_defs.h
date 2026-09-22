@@ -372,6 +372,7 @@ typedef Uint32 S3_PropertiesID;
 #define S3_PROP_WINDOW_WAYLAND_SURFACE_POINTER "SDL.window.wayland.surface"
 #define S3_PROP_WINDOW_WIN32_HWND_POINTER "SDL.window.win32.hwnd"
 #define S3_PROP_WINDOW_WIN32_INSTANCE_POINTER "SDL.window.win32.instance"
+#define S3_PROP_WINDOW_WINRT_WINDOW_POINTER "SDL.window.winrt.window"
 #define S3_PROP_WINDOW_X11_DISPLAY_POINTER "SDL.window.x11.display"
 #define S3_PROP_WINDOW_X11_WINDOW_NUMBER "SDL.window.x11.window"
 #define S3_PROP_JOYSTICK_CAP_MONO_LED_BOOLEAN "SDL.joystick.cap.mono_led"

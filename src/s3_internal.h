@@ -43,6 +43,10 @@ int S3_JoystickDeviceIndex(S3_JoystickID instance_id);
 bool S3_TranslateEvent(const SDL_Event* native, S3_Event* event, char* text, size_t text_size);
 bool S3_PushWindowEvent(Uint8 sdl2_window_event, Uint32 window_id, Sint32 data1, Sint32 data2);
 
+#ifndef __SWITCH__
+void S3_PublishNativeWindowProperties(SDL_Window* window, S3_PropertiesID props);
+#endif
+
 #ifdef __SWITCH__
 bool S3_SwitchInitVideo(void);
 void S3_SwitchQuitVideo(bool all);
