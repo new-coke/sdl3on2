@@ -548,6 +548,9 @@ enum {
 #define SDL_BUTTON_X2MASK SDL_BUTTON_MASK(SDL_BUTTON_X2)
 
 #define SDL_HideCursor S3_HideCursor
+#define SDL_ShowCursor S3_ShowCursor
+#define SDL_SetWindowRelativeMouseMode S3_SetWindowRelativeMouseMode
+#define SDL_TOUCH_MOUSEID S3_TOUCH_MOUSEID
 
 #define SDL_GetError S3_GetError
 #define SDL_SetError S3_SetError
@@ -600,10 +603,12 @@ enum {
 #define SDL_ThreadPriority S3_ThreadPriority
 #define SDL_SetCurrentThreadPriority S3_SetCurrentThreadPriority
 #define SDL_GetTicks S3_GetTicks
+#define SDL_GetTicksNS S3_GetTicksNS
 #define SDL_GetPerformanceCounter S3_GetPerformanceCounter
 #define SDL_GetPerformanceFrequency S3_GetPerformanceFrequency
 
 #define SDL_Rect S3_Rect
+#define SDL_FPoint S3_FPoint
 #define SDL_FRect S3_FRect
 #define SDL_Color S3_Color
 #define SDL_ALPHA_OPAQUE 255
@@ -1004,6 +1009,8 @@ enum {
 #define SDL_GetGamepadJoystick S3_GetGamepadJoystick
 #define SDL_GetGamepadProperties S3_GetGamepadProperties
 #define SDL_GetGamepadName S3_GetGamepadName
+#define SDL_GetGamepadNameForID S3_GetGamepadNameForID
+#define SDL_GetGamepadFromID S3_GetGamepadFromID
 #define SDL_GetGamepadSerial S3_GetGamepadSerial
 #define SDL_GetGamepadType S3_GetGamepadType
 #define SDL_GetGamepadVendor S3_GetGamepadVendor
@@ -1061,6 +1068,7 @@ enum {
 #define SDL_EVENT_WINDOW_LAST S3_EVENT_WINDOW_LAST
 #define SDL_EVENT_KEY_DOWN S3_EVENT_KEY_DOWN
 #define SDL_EVENT_KEY_UP S3_EVENT_KEY_UP
+#define SDL_EVENT_TEXT_EDITING S3_EVENT_TEXT_EDITING
 #define SDL_EVENT_TEXT_INPUT S3_EVENT_TEXT_INPUT
 #define SDL_EVENT_MOUSE_MOTION S3_EVENT_MOUSE_MOTION
 #define SDL_EVENT_MOUSE_BUTTON_DOWN S3_EVENT_MOUSE_BUTTON_DOWN
@@ -1075,11 +1083,18 @@ enum {
 #define SDL_EVENT_FINGER_DOWN S3_EVENT_FINGER_DOWN
 #define SDL_EVENT_FINGER_UP S3_EVENT_FINGER_UP
 #define SDL_EVENT_FINGER_MOTION S3_EVENT_FINGER_MOTION
+#define SDL_EVENT_FINGER_CANCELED S3_EVENT_FINGER_CANCELED
+#define SDL_EVENT_DROP_FILE S3_EVENT_DROP_FILE
+#define SDL_EVENT_DROP_TEXT S3_EVENT_DROP_TEXT
+#define SDL_EVENT_DROP_BEGIN S3_EVENT_DROP_BEGIN
+#define SDL_EVENT_DROP_COMPLETE S3_EVENT_DROP_COMPLETE
+#define SDL_EVENT_DROP_POSITION S3_EVENT_DROP_POSITION
 #define SDL_EVENT_USER S3_EVENT_USER
 #define SDL_EVENT_LAST S3_EVENT_LAST
 #define SDL_CommonEvent S3_CommonEvent
 #define SDL_WindowEvent S3_WindowEvent
 #define SDL_KeyboardEvent S3_KeyboardEvent
+#define SDL_TextEditingEvent S3_TextEditingEvent
 #define SDL_TextInputEvent S3_TextInputEvent
 #define SDL_MouseMotionEvent S3_MouseMotionEvent
 #define SDL_MouseButtonEvent S3_MouseButtonEvent
@@ -1091,6 +1106,7 @@ enum {
 #define SDL_GamepadAxisEvent S3_GamepadAxisEvent
 #define SDL_GamepadButtonEvent S3_GamepadButtonEvent
 #define SDL_TouchFingerEvent S3_TouchFingerEvent
+#define SDL_DropEvent S3_DropEvent
 #define SDL_QuitEvent S3_QuitEvent
 #define SDL_UserEvent S3_UserEvent
 #define SDL_EventFilter S3_EventFilter

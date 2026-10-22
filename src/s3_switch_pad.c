@@ -587,14 +587,8 @@ S3_PropertiesID S3_GetGamepadProperties(S3_Gamepad* gamepad)
     return props;
 }
 
-const char* S3_GetGamepadName(S3_Gamepad* gamepad)
+static const char* S3_SwitchPadName(const S3_SwitchPad* pad)
 {
-    const S3_SwitchPad* pad = S3_SwitchPadFrom(gamepad, "gamepad");
-
-    if (pad == NULL) {
-        return NULL;
-    }
-
     switch (pad->type) {
     case S3_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_LEFT:
         return "Nintendo Switch Joy-Con (L)";
@@ -605,6 +599,35 @@ const char* S3_GetGamepadName(S3_Gamepad* gamepad)
     default:
         return "Nintendo Switch Pro Controller";
     }
+}
+
+const char* S3_GetGamepadName(S3_Gamepad* gamepad)
+{
+    const S3_SwitchPad* pad = S3_SwitchPadFrom(gamepad, "gamepad");
+
+    return pad != NULL ? S3_SwitchPadName(pad) : NULL;
+}
+
+const char* S3_GetGamepadNameForID(S3_JoystickID instance_id)
+{
+    const S3_SwitchPad* pad = S3_SwitchPadForID(instance_id);
+
+    return pad != NULL ? S3_SwitchPadName(pad) : NULL;
+}
+
+S3_Gamepad* S3_GetGamepadFromID(S3_JoystickID instance_id)
+{
+    S3_SwitchPad* pad;
+
+    rmutexLock(&s3_pads_lock);
+    pad = S3_SwitchPadForID(instance_id);
+    if (pad != NULL && pad->refcount == 0) {
+        SDL_SetError("Gamepad %u is not open", (unsigned int)instance_id);
+        pad = NULL;
+    }
+    rmutexUnlock(&s3_pads_lock);
+
+    return (S3_Gamepad*)pad;
 }
 
 const char* S3_GetGamepadSerial(S3_Gamepad* gamepad)

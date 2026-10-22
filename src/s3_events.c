@@ -131,6 +131,15 @@ bool S3_TranslateEvent(const SDL_Event* native, S3_Event* event, char* text, siz
         event->text.text = text;
         break;
 
+    case SDL_TEXTEDITING:
+        SDL_strlcpy(text, native->edit.text, text_size);
+        event->type = S3_EVENT_TEXT_EDITING;
+        event->edit.windowID = native->edit.windowID;
+        event->edit.text = text;
+        event->edit.start = native->edit.start;
+        event->edit.length = native->edit.length;
+        break;
+
     case SDL_MOUSEMOTION:
         event->type = S3_EVENT_MOUSE_MOTION;
         event->motion.windowID = native->motion.windowID;
@@ -287,7 +296,7 @@ static bool S3_DeliverEvent(const SDL_Event* native, S3_Event* event)
     char* text;
 
     text = s3_text_arena[s3_text_arena_index];
-    if (native->type == SDL_TEXTINPUT) {
+    if (native->type == SDL_TEXTINPUT || native->type == SDL_TEXTEDITING) {
         s3_text_arena_index = (s3_text_arena_index + 1) % S3_TEXT_ARENA_SIZE;
     }
 
@@ -485,6 +494,9 @@ S3_Window* S3_GetWindowFromEvent(const S3_Event* event)
             break;
         case S3_EVENT_TEXT_INPUT:
             id = event->text.windowID;
+            break;
+        case S3_EVENT_TEXT_EDITING:
+            id = event->edit.windowID;
             break;
         case S3_EVENT_MOUSE_MOTION:
             id = event->motion.windowID;

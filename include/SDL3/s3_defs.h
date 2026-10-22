@@ -132,6 +132,7 @@ typedef enum S3_ThreadPriority {
 
 extern bool S3_SetCurrentThreadPriority(S3_ThreadPriority priority);
 extern Uint64 S3_GetTicks(void);
+extern Uint64 S3_GetTicksNS(void);
 extern Uint64 S3_GetPerformanceCounter(void);
 extern Uint64 S3_GetPerformanceFrequency(void);
 
@@ -143,6 +144,11 @@ typedef struct S3_Rect {
     int w;
     int h;
 } S3_Rect;
+
+typedef struct S3_FPoint {
+    float x;
+    float y;
+} S3_FPoint;
 
 typedef struct S3_FRect {
     float x;
@@ -495,6 +501,8 @@ extern bool S3_HideWindow(S3_Window* window);
 extern bool S3_RaiseWindow(S3_Window* window);
 extern bool S3_RestoreWindow(S3_Window* window);
 extern bool S3_HideCursor(void);
+extern bool S3_ShowCursor(void);
+extern bool S3_SetWindowRelativeMouseMode(S3_Window* window, bool enabled);
 
 typedef Uint32 S3_BlendMode;
 
@@ -742,6 +750,8 @@ extern S3_JoystickID S3_GetGamepadID(S3_Gamepad* gamepad);
 extern S3_Joystick* S3_GetGamepadJoystick(S3_Gamepad* gamepad);
 extern S3_PropertiesID S3_GetGamepadProperties(S3_Gamepad* gamepad);
 extern const char* S3_GetGamepadName(S3_Gamepad* gamepad);
+extern const char* S3_GetGamepadNameForID(S3_JoystickID instance_id);
+extern S3_Gamepad* S3_GetGamepadFromID(S3_JoystickID instance_id);
 extern const char* S3_GetGamepadSerial(S3_Gamepad* gamepad);
 extern S3_GamepadType S3_GetGamepadType(S3_Gamepad* gamepad);
 extern Uint16 S3_GetGamepadVendor(S3_Gamepad* gamepad);
@@ -803,6 +813,7 @@ typedef Uint32 S3_EventType;
 #define S3_EVENT_WINDOW_LAST 0x21Au
 #define S3_EVENT_KEY_DOWN 0x300u
 #define S3_EVENT_KEY_UP 0x301u
+#define S3_EVENT_TEXT_EDITING 0x302u
 #define S3_EVENT_TEXT_INPUT 0x303u
 #define S3_EVENT_MOUSE_MOTION 0x400u
 #define S3_EVENT_MOUSE_BUTTON_DOWN 0x401u
@@ -817,6 +828,12 @@ typedef Uint32 S3_EventType;
 #define S3_EVENT_FINGER_DOWN 0x700u
 #define S3_EVENT_FINGER_UP 0x701u
 #define S3_EVENT_FINGER_MOTION 0x702u
+#define S3_EVENT_FINGER_CANCELED 0x703u
+#define S3_EVENT_DROP_FILE 0x1000u
+#define S3_EVENT_DROP_TEXT 0x1001u
+#define S3_EVENT_DROP_BEGIN 0x1002u
+#define S3_EVENT_DROP_COMPLETE 0x1003u
+#define S3_EVENT_DROP_POSITION 0x1004u
 #define S3_EVENT_USER 0x8000u
 #define S3_EVENT_LAST 0xFFFFu
 
@@ -856,6 +873,16 @@ typedef struct S3_TextInputEvent {
     S3_WindowID windowID;
     const char* text;
 } S3_TextInputEvent;
+
+typedef struct S3_TextEditingEvent {
+    Uint32 type;
+    Uint32 reserved;
+    Uint64 timestamp;
+    S3_WindowID windowID;
+    const char* text;
+    Sint32 start;
+    Sint32 length;
+} S3_TextEditingEvent;
 
 typedef struct S3_MouseMotionEvent {
     Uint32 type;
@@ -949,6 +976,19 @@ typedef struct S3_TouchFingerEvent {
     S3_WindowID windowID;
 } S3_TouchFingerEvent;
 
+#define S3_TOUCH_MOUSEID ((Uint32)-1)
+
+typedef struct S3_DropEvent {
+    Uint32 type;
+    Uint32 reserved;
+    Uint64 timestamp;
+    S3_WindowID windowID;
+    float x;
+    float y;
+    const char* source;
+    const char* data;
+} S3_DropEvent;
+
 typedef struct S3_QuitEvent {
     Uint32 type;
     Uint32 reserved;
@@ -970,6 +1010,7 @@ typedef union S3_PUBLIC_TAG(SDL_Event, S3_Event) {
     S3_CommonEvent common;
     S3_WindowEvent window;
     S3_KeyboardEvent key;
+    S3_TextEditingEvent edit;
     S3_TextInputEvent text;
     S3_MouseMotionEvent motion;
     S3_MouseButtonEvent button;
@@ -978,6 +1019,7 @@ typedef union S3_PUBLIC_TAG(SDL_Event, S3_Event) {
     S3_GamepadAxisEvent gaxis;
     S3_GamepadButtonEvent gbutton;
     S3_TouchFingerEvent tfinger;
+    S3_DropEvent drop;
     S3_QuitEvent quit;
     S3_UserEvent user;
     Uint8 padding[128];

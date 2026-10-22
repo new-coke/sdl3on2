@@ -476,6 +476,24 @@ Uint16 S3_GetGamepadProduct(S3_Gamepad* gamepad)
     return SDL_GameControllerGetProduct(S3_UnwrapGamepad(gamepad));
 }
 
+const char* S3_GetGamepadNameForID(S3_JoystickID instance_id)
+{
+    const int index = S3_JoystickDeviceIndex(instance_id);
+
+    return index >= 0 ? SDL_GameControllerNameForIndex(index) : NULL;
+}
+
+S3_Gamepad* S3_GetGamepadFromID(S3_JoystickID instance_id)
+{
+    SDL_GameController* native = SDL_GameControllerFromInstanceID(S3_ToSDL2JoystickID(instance_id));
+
+    if (native == NULL) {
+        SDL_SetError("Invalid joystick instance ID");
+    }
+
+    return (S3_Gamepad*)native;
+}
+
 S3_GUID S3_GetGamepadGUIDForID(S3_JoystickID instance_id)
 {
     const int index = S3_JoystickDeviceIndex(instance_id);

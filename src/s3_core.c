@@ -236,6 +236,11 @@ Uint64 S3_GetTicks(void)
     return SDL_GetTicks64();
 }
 
+Uint64 S3_GetTicksNS(void)
+{
+    return SDL_GetTicks64() * UINT64_C(1000000);
+}
+
 Uint64 S3_GetPerformanceCounter(void)
 {
     return SDL_GetPerformanceCounter();

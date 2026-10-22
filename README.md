@@ -27,7 +27,9 @@ declared in `include/SDL3/s3_defs.h` and `include/SDL3_mixer/s3_mixer_defs.h` ex
   mapped.
 - Setting a string property to NULL clears its value; it does not delete the property.
 - SDL3 event types with no SDL2 source, such as pen and camera events, are not declared, and
-  `SDL_INIT_CAMERA` fails.
+  `SDL_INIT_CAMERA` fails. `SDL_EVENT_FINGER_CANCELED` and the drop events are declared so code
+  can name them, but none is ever delivered.
+- `SDL_SetWindowRelativeMouseMode` sets SDL2's relative mode, which applies to every window.
 - On Switch, gamepads come from libnx instead of SDL2's joystick driver. Each of up to eight
   controllers is a gamepad only while it is connected, and its player index is the console's player
   number. SDL3's sideways mapping applies to a single Joy-Con. A controller that changes style,

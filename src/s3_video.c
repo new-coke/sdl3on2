@@ -346,6 +346,21 @@ bool S3_HideCursor(void)
     return SDL_ShowCursor(SDL_DISABLE) >= 0;
 }
 
+bool S3_ShowCursor(void)
+{
+    return SDL_ShowCursor(SDL_ENABLE) >= 0;
+}
+
+bool S3_SetWindowRelativeMouseMode(S3_Window* window, bool enabled)
+{
+    if (window == NULL) {
+        SDL_SetError("Invalid window");
+        return false;
+    }
+
+    return SDL_SetRelativeMouseMode(enabled ? SDL_TRUE : SDL_FALSE) == 0;
+}
+
 #ifndef __SWITCH__
 
 // SDL3 display ids are 1-based; id N is SDL2's display index N-1.
