@@ -328,6 +328,49 @@ bool S3_PollEvent(S3_Event* event)
     return event == NULL || S3_DeliverEvent(&native, event);
 }
 
+static_assert(S3_ADDEVENT == (int)SDL_ADDEVENT && S3_PEEKEVENT == (int)SDL_PEEKEVENT &&
+                  S3_GETEVENT == (int)SDL_GETEVENT,
+              "SDL_eventaction");
+
+int S3_PeepEvents(S3_Event* events, int numevents, S3_EventAction action, Uint32 minType, Uint32 maxType)
+{
+    SDL_Event native[16];
+    int total = 0;
+
+    // Outside the window range both versions number their events alike; SDL2 has one window type.
+    if (maxType >= S3_EVENT_WINDOW_FIRST && minType <= S3_EVENT_WINDOW_LAST) {
+        return SDL_SetError("SDL_PeepEvents through sdl3on2 cannot select window events");
+    }
+
+    if (action == S3_ADDEVENT) {
+        for (; total < numevents; total++) {
+            if (!S3_PushEvent(&events[total])) {
+                break;
+            }
+        }
+        return total;
+    }
+
+    while (total < numevents) {
+        const int want = numevents - total < 16 ? numevents - total : 16;
+        const int got = SDL_PeepEvents(native, want, (SDL_eventaction)action, minType, maxType);
+
+        if (got < 0) {
+            return total > 0 ? total : got;
+        }
+        for (int i = 0; events != NULL && i < got; i++) {
+            S3_DeliverEvent(&native[i], &events[total + i]);
+        }
+        total += got;
+        // Peeking again would return the same events.
+        if (got < want || action == S3_PEEKEVENT) {
+            break;
+        }
+    }
+
+    return total;
+}
+
 bool S3_WaitEventTimeout(S3_Event* event, Sint32 timeoutMS)
 {
     SDL_Event native;

@@ -1114,6 +1114,11 @@ enum {
 #define SDL_WaitEvent S3_WaitEvent
 #define SDL_WaitEventTimeout S3_WaitEventTimeout
 #define SDL_PumpEvents S3_PumpEvents
+#define SDL_EventAction S3_EventAction
+#define SDL_ADDEVENT S3_ADDEVENT
+#define SDL_PEEKEVENT S3_PEEKEVENT
+#define SDL_GETEVENT S3_GETEVENT
+#define SDL_PeepEvents S3_PeepEvents
 #define SDL_PushEvent S3_PushEvent
 #define SDL_RegisterEvents S3_RegisterEvents
 #define SDL_AddEventWatch S3_AddEventWatch

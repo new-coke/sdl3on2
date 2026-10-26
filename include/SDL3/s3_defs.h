@@ -1031,6 +1031,12 @@ extern bool S3_PollEvent(S3_Event* event);
 extern bool S3_WaitEvent(S3_Event* event);
 extern bool S3_WaitEventTimeout(S3_Event* event, Sint32 timeoutMS);
 extern void S3_PumpEvents(void);
+typedef enum S3_EventAction {
+    S3_ADDEVENT,
+    S3_PEEKEVENT,
+    S3_GETEVENT,
+} S3_EventAction;
+extern int S3_PeepEvents(S3_Event* events, int numevents, S3_EventAction action, Uint32 minType, Uint32 maxType);
 extern bool S3_PushEvent(S3_Event* event);
 extern Uint32 S3_RegisterEvents(int numevents);
 extern bool S3_AddEventWatch(S3_EventFilter filter, void* userdata);
